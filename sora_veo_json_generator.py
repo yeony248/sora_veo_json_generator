@@ -9,6 +9,36 @@ st.set_page_config(
     layout="wide"
 )
 
+# 예시 프롬프트들
+EXAMPLE_PROMPTS = {
+    "누텔라 광고": "누텔라 병이 터지면서 초콜릿과 헤이즐넛이 공중에서 춤추듯 날아다니며 토스트 위에 쌓이는 장면",
+    "커피 상품": "커피 원두가 천천히 떨어지며 컵 안에서 아름다운 라떼아트가 만들어지는 과정, 김이 피어오르는 모습",
+    "자동차 광고": "미래형 전기차가 네온 불빛 가득한 도시를 질주하며, 비 내리는 밤거리에 반사되는 불빛들",
+    "패션 룩북": "모델이 화려한 드레스를 입고 회전하며, 천이 공중에서 우아하게 펼쳐지는 슬로우모션",
+    "음식 레시피": "신선한 야채들이 도마 위로 떨어지며 자동으로 썰리고, 프라이팬에서 불꽃과 함께 볶아지는 장면",
+    "스포츠 하이라이트": "농구공이 슬로우모션으로 날아가 림을 통과하는 순간, 관중들이 환호하는 모습",
+    "캐릭터 애니메이션": "귀여운 동물 캐릭터들이 카페에서 만나 어색하게 대화하다 친해지는 이야기",
+    "게임 트레일러": "판타지 세계의 영웅이 검을 뽑으며 몬스터와 대결하는 액션 장면"
+}
+
+# CSS for copy button
+st.markdown("""
+<style>
+.copy-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.copy-button:hover {
+    background-color: #45a049;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # 제목 및 설명
 st.title("🎬 SORA/VEO JSON Prompt Generator")
 st.markdown("AI 비디오 생성을 위한 전문적인 JSON 프롬프트 생성기")
@@ -32,16 +62,17 @@ with st.sidebar:
     st.markdown("""
     1. OpenAI API 키 입력
     2. 템플릿 유형 선택
-    3. 비디오 아이디어 입력
+    3. 비디오 아이디어 입력 (또는 예시 선택)
     4. '프롬프트 생성' 클릭
+    5. 생성된 JSON 복사
     """)
     
     st.markdown("---")
     st.markdown("### 💡 팁")
     st.markdown("""
+    - 예시 버튼을 눌러 빠르게 시작하세요
     - 구체적인 장면 설명이 중요합니다
     - 카메라 움직임, 조명을 명시하세요
-    - 원하는 분위기와 스타일을 설명하세요
     """)
 
 # 메인 컨텐츠
@@ -50,28 +81,78 @@ col1, col2 = st.columns([1, 1])
 with col1:
     st.header("입력")
     
+    # 예시 선택 버튼들
+    st.subheader("💡 예시 아이디어 (클릭하여 자동 입력)")
+    
+    # 2열로 버튼 배치
+    example_cols = st.columns(2)
+    for idx, (name, prompt) in enumerate(EXAMPLE_PROMPTS.items()):
+        col_idx = idx % 2
+        with example_cols[col_idx]:
+            if st.button(name, key=f"example_{idx}", use_container_width=True):
+                st.session_state.video_description = prompt
+    
+    st.markdown("---")
+    
     # 비디오 설명
     video_description = st.text_area(
         "비디오 아이디어를 설명하세요",
-        height=200,
-        placeholder="예: 누텔라 병이 터지면서 초콜릿과 헤이즐넛이 공중에서 춤추듯 날아다니며 토스트 위에 쌓이는 장면"
+        value=st.session_state.get('video_description', ''),
+        height=150,
+        placeholder="예: 석양이 지는 해변에서 서핑하는 사람"
     )
     
     # 템플릿별 추가 입력
     if template_type == "SORA/VEO 기본형 (단일 씬)":
-        with st.expander("🎯 비디오 세부 설정"):
+        st.subheader("🎯 비디오 세부 설정")
+        
+        # 화면 비율 버튼
+        st.write("**화면 비율**")
+        aspect_cols = st.columns(3)
+        with aspect_cols[0]:
+            aspect_169 = st.button("16:9 (가로)", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio') == '16:9' else "secondary")
+            if aspect_169:
+                st.session_state.aspect_ratio = '16:9'
+        with aspect_cols[1]:
+            aspect_916 = st.button("9:16 (세로)", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio') == '9:16' else "secondary")
+            if aspect_916:
+                st.session_state.aspect_ratio = '9:16'
+        with aspect_cols[2]:
+            aspect_11 = st.button("1:1 (정사각)", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio') == '1:1' else "secondary")
+            if aspect_11:
+                st.session_state.aspect_ratio = '1:1'
+        
+        aspect_ratio = st.session_state.get('aspect_ratio', '16:9')
+        st.info(f"선택된 비율: {aspect_ratio}")
+        
+        with st.expander("⚙️ 추가 옵션 (선택사항)"):
             style = st.text_input("스타일", placeholder="예: photorealistic cinematic")
             camera_movement = st.text_input("카메라 움직임", placeholder="예: slow orbital shot")
             lighting = st.text_input("조명", placeholder="예: morning sunlight")
-            duration = st.text_input("시간/비율", placeholder="예: 16:9")
     
     else:  # 스토리텔링형
-        with st.expander("🎯 비디오 세부 설정"):
-            video_type = st.text_input("영상 스타일", placeholder="예: 3D cartoon, realistic", value="3D cartoon")
-            duration = st.text_input("길이", placeholder="예: 15s", value="15s")
-            aspect_ratio = st.text_input("화면 비율", placeholder="예: 9:16", value="9:16")
-            tone = st.text_input("톤/분위기", placeholder="예: Warm, cute, and comically awkward")
+        st.subheader("🎯 비디오 세부 설정")
+        
+        col_a, col_b = st.columns(2)
+        
+        with col_a:
+            # 화면 비율 버튼
+            st.write("**화면 비율**")
+            aspect_169_story = st.button("16:9", key="story_169", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio_story') == '16:9' else "secondary")
+            if aspect_169_story:
+                st.session_state.aspect_ratio_story = '16:9'
+            aspect_916_story = st.button("9:16", key="story_916", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio_story') == '9:16' else "secondary")
+            if aspect_916_story:
+                st.session_state.aspect_ratio_story = '9:16'
             
+            aspect_ratio = st.session_state.get('aspect_ratio_story', '9:16')
+            
+        with col_b:
+            video_type = st.selectbox("영상 스타일", ["3D cartoon", "2D animation", "realistic", "anime"], index=0)
+            duration = st.text_input("길이", value="15s", placeholder="예: 15s")
+        
+        tone = st.text_input("톤/분위기", placeholder="예: Warm, cute, and comically awkward")
+        
         with st.expander("👥 캐릭터 설정 (선택사항)"):
             num_characters = st.number_input("캐릭터 수", min_value=0, max_value=5, value=2)
             character_info = st.text_area(
@@ -80,6 +161,7 @@ with col1:
                 height=100
             )
     
+    st.markdown("---")
     # 생성 버튼
     generate_button = st.button("🚀 JSON 프롬프트 생성", type="primary", use_container_width=True)
 
@@ -166,14 +248,13 @@ with col2:
                 user_prompt_parts = [f"비디오 아이디어: {video_description}"]
                 
                 if template_type == "SORA/VEO 기본형 (단일 씬)":
+                    user_prompt_parts.append(f"화면비율: {aspect_ratio}")
                     if style:
                         user_prompt_parts.append(f"스타일: {style}")
                     if camera_movement:
                         user_prompt_parts.append(f"카메라: {camera_movement}")
                     if lighting:
                         user_prompt_parts.append(f"조명: {lighting}")
-                    if duration:
-                        user_prompt_parts.append(f"화면비율/시간: {duration}")
                 else:
                     user_prompt_parts.append(f"영상 스타일: {video_type}")
                     user_prompt_parts.append(f"길이: {duration}")
@@ -223,22 +304,36 @@ with col2:
                     # JSON 표시
                     st.json(json_data if isinstance(json_data, dict) else json.loads(formatted_json))
                     
-                    # 복사용 코드 블록
+                    st.markdown("---")
+                    
+                    # 복사용 JSON with copy button
+                    st.subheader("📋 복사용 JSON")
+                    
+                    # 복사 버튼 (Streamlit의 기본 기능 사용)
+                    col_copy1, col_copy2 = st.columns([3, 1])
+                    with col_copy2:
+                        if st.button("📋 클립보드에 복사", use_container_width=True):
+                            st.write("```json\n" + formatted_json + "\n```")
+                            st.success("✅ 복사되었습니다! (위 JSON을 Ctrl+C 또는 Cmd+C로 복사하세요)")
+                    
+                    # 텍스트 영역 (선택하여 복사 가능)
                     st.text_area(
-                        "복사용 JSON",
+                        "JSON 내용 (클릭하여 전체 선택 후 Ctrl+C/Cmd+C)",
                         value=formatted_json,
-                        height=400
+                        height=300,
+                        label_visibility="collapsed"
                     )
                     
                     # 다운로드 버튼
                     st.download_button(
-                        label="📥 JSON 파일 다운로드",
+                        label="💾 JSON 파일 다운로드",
                         data=formatted_json,
-                        file_name=f"sora_veo_prompt_{template_type.split()[0].lower()}.json",
-                        mime="application/json"
+                        file_name=f"prompt_{template_type.split()[0].lower()}.json",
+                        mime="application/json",
+                        use_container_width=True
                     )
                     
-                    st.info(f"💡 이 JSON을 {'SORA' if template_type.startswith('SORA') else 'VEO'} API에 사용하세요!")
+                    st.info(f"💡 위 JSON을 복사하여 {'SORA' if template_type.startswith('SORA') else 'VEO'} API에 사용하세요!")
                     
             except Exception as e:
                 error_msg = str(e)
