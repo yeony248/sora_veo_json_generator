@@ -9,16 +9,16 @@ st.set_page_config(
     layout="wide"
 )
 
-# 예시 프롬프트들 (구체적 상품명 제거, 더 일반적으로)
+# 예시 프롬프트들
 EXAMPLE_PROMPTS = {
     "식품 CF": "병이 터지면서 내용물과 재료들이 공중에서 춤추듯 날아다니며 완성된 음식 위에 쌓이는 장면",
     "음료 CF": "원두가 천천히 떨어지며 컵 안에서 아름다운 라떼아트가 만들어지는 과정, 김이 피어오르는 모습",
     "자동차 CF": "미래형 전기차가 네온 불빛 가득한 도시를 질주하며, 비 내리는 밤거리에 반사되는 불빛들",
     "패션 CF": "모델이 화려한 의상을 입고 회전하며, 천이 공중에서 우아하게 펼쳐지는 슬로우모션",
     "요리 영상": "신선한 재료들이 도마 위로 떨어지며 자동으로 썰리고, 프라이팬에서 불꽃과 함께 조리되는 장면",
-    "스포츠 영상": "공이 슬로우모션으로 날아가 골대를 통과하는 순간, 관중들이 환호하는 모습",
+    "스포츠 영상": "공이 슬로우모션으로 날아가 림을 통과하는 순간, 관중들이 환호하는 모습",
     "캐릭터 애니": "귀여운 동물 캐릭터들이 카페에서 만나 어색하게 대화하다 친해지는 이야기",
-    "게임 트레일러": "판타지 세계의 영웅이 무기를 들고 몬스터와 대결하는 액션 장면",
+    "게임 트레일러": "판타지 세계의 영웅이 검을 뽑으며 몬스터와 대결하는 액션 장면",
     "뷰티 CF": "화장품이 피부에 스며들며 빛나는 효과가 나타나고, 모델의 얼굴이 클로즈업되는 장면",
     "여행 영상": "드론이 아름다운 해변과 산을 가로지르며, 석양이 지는 풍경을 담는 장면"
 }
@@ -37,14 +37,14 @@ CAMERA_MOVEMENTS = {
 
 # 캐릭터 목소리 톤 프리셋
 VOICE_TONES = {
-    "밝고 경쾌한": "bright and cheerful tone",
-    "차분하고 따뜻한": "calm and warm tone",
-    "활기찬 에너제틱": "energetic and lively tone",
-    "부드럽고 온화한": "soft and gentle tone",
-    "신나는 유쾌한": "excited and playful tone",
-    "조용하고 섬세한": "quiet and delicate tone",
-    "힘찬 자신감": "strong and confident tone",
-    "수줍은 소심한": "shy and timid tone"
+    "밝고 경쾌한": "bright and cheerful",
+    "차분하고 따뜻한": "calm and warm",
+    "활기찬 에너제틱": "energetic and lively",
+    "부드럽고 온화한": "soft and gentle",
+    "신나는 유쾌한": "excited and playful",
+    "조용하고 섬세한": "quiet and delicate",
+    "힘찬 자신감": "strong and confident",
+    "수줍은 소심한": "shy and timid"
 }
 
 # CSS for better UI
@@ -74,15 +74,6 @@ with st.sidebar:
         help="생성할 JSON 템플릿 유형을 선택하세요"
     )
     
-    # 언어 선택 (스토리텔링형에서만)
-    if template_type == "VEO 스토리텔링형 (멀티 컷)":
-        st.markdown("---")
-        dialogue_language = st.radio(
-            "대사 언어",
-            ["한국어", "영어"],
-            help="캐릭터 대사를 어떤 언어로 생성할지 선택하세요"
-        )
-    
     st.markdown("---")
     st.markdown("### 📖 사용 방법")
     st.markdown("""
@@ -100,6 +91,38 @@ with st.sidebar:
     - 카메라 움직임 프리셋 활용
     - 구체적인 장면 설명이 중요
     """)
+    
+    st.markdown("---")
+    st.markdown("### ℹ️ 프롬프트 설명")
+    
+    if template_type == "SORA/VEO 기본형 (단일 씬)":
+        st.markdown("""
+        **기본형 템플릿 구조:**
+        - `description`: 전체 장면 설명
+        - `style`: 영상 스타일
+        - `camera`: 카메라 움직임
+        - `lighting`: 조명 설정
+        - `room`: 배경/공간
+        - `elements`: 주요 요소들
+        - `motion`: 움직임 흐름
+        - `ending`: 마지막 장면
+        - `keywords`: 관련 키워드
+        
+        **용도:** 광고, 제품 영상, 단일 컨셉 영상
+        """)
+    else:
+        st.markdown("""
+        **스토리텔링 템플릿 구조:**
+        - `video_type`: 영상 스타일
+        - `duration`: 총 길이
+        - `aspect_ratio`: 화면 비율
+        - `tone`: 전체 톤/분위기
+        - `bgm`: 배경음악 스타일
+        - `characters`: 캐릭터 정보
+        - `cuts`: 씬별 타임라인
+        
+        **용도:** 캐릭터 애니메이션, 스토리가 있는 영상, 대화 장면
+        """)
 
 # 메인 컨텐츠
 col1, col2 = st.columns([1, 1])
@@ -189,18 +212,23 @@ with col1:
             aspect_169_story = st.button("16:9", key="story_169", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio_story') == '16:9' else "secondary")
             if aspect_169_story:
                 st.session_state.aspect_ratio_story = '16:9'
+                st.session_state.resolution = '1920x1080'
             aspect_916_story = st.button("9:16", key="story_916", use_container_width=True, type="primary" if st.session_state.get('aspect_ratio_story') == '9:16' else "secondary")
             if aspect_916_story:
                 st.session_state.aspect_ratio_story = '9:16'
+                st.session_state.resolution = '1080x1920'
             
             aspect_ratio = st.session_state.get('aspect_ratio_story', '9:16')
+            resolution = st.session_state.get('resolution', '1080x1920')
             st.success(f"✓ {aspect_ratio}")
+            st.caption(f"해상도: {resolution}")
             
         with col_b:
-            video_type = st.selectbox("영상 스타일", ["3D cartoon", "2D animation", "realistic", "anime"], index=0)
-            duration = st.text_input("길이", value="15s", placeholder="예: 15s")
+            video_type = st.selectbox("영상 스타일", ["Anime", "Live-action", "3D cartoon"], index=2)
+            duration = st.text_input("길이", value="10s", placeholder="예: 10s")
         
-        tone = st.text_input("톤/분위기", placeholder="예: Warm, cute, and comically awkward")
+        tone = st.text_input("톤/분위기", value="Warm and soft", placeholder="예: Warm and soft / Energetic and bright")
+        bgm_style = st.text_input("배경음악 스타일", value="Lo-fi chill beats", placeholder="예: Lo-fi chill beats / Playful cafe ukulele")
         
         st.markdown("---")
         
@@ -208,6 +236,8 @@ with col1:
             num_characters = st.number_input("캐릭터 수", min_value=0, max_value=5, value=2)
             
             if num_characters > 0:
+                st.info("💬 대사는 모두 **한국어**로 생성됩니다")
+                
                 character_info = st.text_area(
                     "캐릭터 설명",
                     placeholder="예:\n캐릭터1: 수다스럽지만 긴장하는 다람쥐\n캐릭터2: 차분하고 예의 바른 햄스터",
@@ -225,9 +255,10 @@ with col1:
                         col_idx = idx % 4
                         with voice_cols[col_idx]:
                             if st.button(name, key=f"voice_{i}_{idx}", use_container_width=True):
-                                st.session_state[f'voice_tone_{i}'] = f"{name} ({tone_desc})"
+                                st.session_state[f'voice_tone_{i}'] = tone_desc
+                                st.session_state[f'voice_tone_kr_{i}'] = name
                     
-                    selected_voice = st.session_state.get(f'voice_tone_{i}', '')
+                    selected_voice = st.session_state.get(f'voice_tone_kr_{i}', '')
                     if selected_voice:
                         st.caption(f"✓ 선택됨: {selected_voice}")
     
@@ -275,48 +306,70 @@ with col2:
 7. 응답은 유효한 JSON만 출력 (설명 없이)"""
 
                 else:  # 스토리텔링형
-                    dialogue_lang = dialogue_language if 'dialogue_language' in locals() else '한국어'
-                    
-                    system_prompt = f"""당신은 VEO 스토리텔링용 JSON 프롬프트 전문가입니다.
-사용자의 입력을 받아 다음 구조의 JSON을 생성하세요:
+                    system_prompt = """당신은 VEO 스토리텔링용 JSON 프롬프트 전문가입니다.
+사용자의 입력을 받아 정확히 다음 템플릿 구조의 JSON을 생성하세요:
 
-{{
-  "video_type": "영상 스타일",
-  "duration": "총 길이",
-  "resolution": "해상도",
-  "aspect_ratio": "화면 비율",
+{
+  "video_type": "<Anime / Live-action / 3D cartoon>",
+  "duration": "<영상 길이, 예: 10s>",
+  "resolution": "<해상도, 예: 1080x1920 또는 1920x1080>",
+  "aspect_ratio": "<9:16 또는 16:9>",
   "fps": 30,
-  "tone": "전체적인 톤과 분위기",
-  "restrictions": ["제약사항 배열"],
-  "bgm": {{
-    "style": "배경음악 스타일 설명"
-  }},
-  "characters": {{
-    "CHARACTER1": {{
-      "design_reference": "캐릭터 디자인 설명",
-      "personality": "성격 설명",
-      "voice": "목소리 톤 설명"
-    }}
-  }},
+  "tone": "<영상의 전체 톤, 예: Warm and soft / Energetic and bright>",
+  "restrictions": [
+    "The attached image is only for character sheet reference. Do not include it directly in the video."
+  ],
+  "bgm": {
+    "style": "<배경음악 스타일, 예: Lo-fi chill beats / Playful cafe ukulele>"
+  },
+  "characters": {
+    "CHARACTER1": {
+      "design_reference": "attached image",
+      "personality": "<성격 키워드>",
+      "voice": "<목소리 톤 설명>"
+    },
+    "CHARACTER2": {
+      "design_reference": "attached image",
+      "personality": "<성격 키워드>",
+      "voice": "<목소리 톤 설명>"
+    }
+  },
   "cuts": [
-    {{
+    {
       "id": 1,
-      "time": "0.0-5.0s",
-      "scene": "장면 설명 (영어)",
-      "action": "액션 설명 (영어)",
-      "dialogue": "대사 ({'한국어' if dialogue_lang == '한국어' else '영어'})"
-    }}
+      "time": "0.0–3.5s",
+      "scene": "<장면 묘사 - 영어>",
+      "action": "<캐릭터 동작 - 영어>",
+      "dialogue": "CHARACTER1 (<voice style>): '<대사 - 한국어>'"
+    },
+    {
+      "id": 2,
+      "time": "3.5–7.0s",
+      "scene": "<장면 묘사 - 영어>",
+      "action": "<캐릭터 동작 - 영어>",
+      "dialogue": "CHARACTER2 (<voice style>): '<대사 - 한국어>'"
+    },
+    {
+      "id": 3,
+      "time": "7.0–10.0s",
+      "scene": "<장면 묘사 - 영어>",
+      "action": "<캐릭터 동작 - 영어>",
+      "dialogue": "CHARACTER1 (<voice style>): '<대사 - 한국어>'"
+    }
   ]
-}}
+}
 
-규칙:
-1. cuts는 최소 3개 이상의 씬으로 구성
-2. scene과 action은 영어로 상세하게
-3. dialogue는 **반드시 {dialogue_lang}로 작성**
-4. 각 cut의 시간은 연속적으로
-5. characters는 입력된 캐릭터 수만큼
-6. 영상 내 자막(text overlay)은 없음 - 대사만 음성으로
-7. 응답은 유효한 JSON만 출력 (설명 없이)"""
+중요 규칙:
+1. **반드시 위 템플릿 구조를 정확히 따를 것**
+2. video_type, duration, resolution, aspect_ratio, fps, tone, restrictions, bgm, characters, cuts 필드 모두 포함
+3. scene과 action은 영어로 작성
+4. dialogue는 **반드시 한국어로 작성** (영어 절대 금지)
+5. dialogue 형식: "CHARACTER이름 (목소리 스타일): '한국어 대사'"
+6. cuts는 최소 3개 이상, 시간은 연속적으로
+7. characters 수는 입력받은 캐릭터 수만큼
+8. fps는 항상 30
+9. restrictions는 템플릿의 내용 그대로 유지
+10. 응답은 유효한 JSON만 출력 (설명 없이)"""
 
                 # 사용자 프롬프트 구성
                 user_prompt_parts = [f"비디오 아이디어: {video_description}"]
@@ -325,25 +378,30 @@ with col2:
                     user_prompt_parts.append(f"화면비율: {aspect_ratio}")
                     if camera_movement:
                         user_prompt_parts.append(f"카메라 움직임: {camera_movement}")
-                    if style:
+                    if 'style' in locals() and style:
                         user_prompt_parts.append(f"스타일: {style}")
-                    if lighting:
+                    if 'lighting' in locals() and lighting:
                         user_prompt_parts.append(f"조명: {lighting}")
                 else:
-                    user_prompt_parts.append(f"영상 스타일: {video_type}")
-                    user_prompt_parts.append(f"길이: {duration}")
-                    user_prompt_parts.append(f"화면비율: {aspect_ratio}")
-                    user_prompt_parts.append(f"대사 언어: {dialogue_lang}")
-                    if tone:
-                        user_prompt_parts.append(f"톤: {tone}")
+                    user_prompt_parts.append(f"video_type: {video_type}")
+                    user_prompt_parts.append(f"duration: {duration}")
+                    user_prompt_parts.append(f"resolution: {resolution}")
+                    user_prompt_parts.append(f"aspect_ratio: {aspect_ratio}")
+                    user_prompt_parts.append(f"tone: {tone}")
+                    user_prompt_parts.append(f"bgm style: {bgm_style}")
+                    
                     if 'character_info' in locals() and character_info:
-                        user_prompt_parts.append(f"캐릭터:\n{character_info}")
+                        user_prompt_parts.append(f"\n캐릭터 정보:\n{character_info}")
                         
                         # 목소리 톤 추가
+                        user_prompt_parts.append("\n캐릭터 목소리:")
                         for i in range(num_characters):
                             voice = st.session_state.get(f'voice_tone_{i}', '')
+                            voice_kr = st.session_state.get(f'voice_tone_kr_{i}', '')
                             if voice:
-                                user_prompt_parts.append(f"캐릭터{i+1} 목소리: {voice}")
+                                user_prompt_parts.append(f"캐릭터{i+1}: {voice_kr} ({voice})")
+                    
+                    user_prompt_parts.append("\n**중요: 대사(dialogue)는 모두 한국어로 작성**")
                 
                 user_prompt = "\n".join(user_prompt_parts)
                 
@@ -356,7 +414,7 @@ with col2:
                             {"role": "user", "content": user_prompt}
                         ],
                         temperature=0.7,
-                        max_tokens=2000
+                        max_tokens=2500
                     )
                     
                     # 결과 추출 및 JSON 파싱
@@ -394,7 +452,7 @@ with col2:
                     st.text_area(
                         "클릭하여 전체 선택 후 Ctrl+C (또는 Cmd+C)로 복사",
                         value=formatted_json,
-                        height=300,
+                        height=400,
                         label_visibility="collapsed"
                     )
                     
@@ -423,5 +481,6 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #666;'>
     <p>Made with ❤️ for AI Video Creators | Powered by OpenAI GPT-4</p>
+    <p style='font-size: 14px; margin-top: 5px;'>Created by <strong>@ruangday</strong></p>
 </div>
 """, unsafe_allow_html=True)
